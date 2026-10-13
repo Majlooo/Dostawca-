@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Dostawca+" />
+  <meta name="format-detection" content="telephone=yes" />
+  <title>Dostawca+ — Asystent Dostawcy</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar glass">
+      <div>
+        <div class="eyebrow" id="todayLabel">Dzisiaj</div>
+        <h1>Dostawca<span>+</span></h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="themeBtn" aria-label="Zmień motyw" title="Zmień motyw">◐</button>
+        <button class="avatar" id="settingsBtn" aria-label="Ustawienia">D+</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view active" data-view="today">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <div class="status-pill" id="shiftStatus"><span></span> Zmiana nieaktywna</div>
+            <h2 id="heroTitle">Gotowy na trasę?</h2>
+            <p id="heroSubtitle">Dodaj adresy, zoptymalizuj kolejność i ruszaj.</p>
+          </div>
+          <button class="primary big" id="shiftBtn">Rozpocznij zmianę</button>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric-card"><span>KM dzisiaj</span><strong id="kmMetric">0,0</strong><small>śledzone w aplikacji</small></article>
+          <article class="metric-card"><span>Zlecenia</span><strong id="jobsMetric">0/0</strong><small id="jobsSmall">brak punktów</small></article>
+          <article class="metric-card"><span>Czas pracy</span><strong id="timeMetric">00:00</strong><small id="timeSmall">zmiana nieaktywna</small></article>
+          <article class="metric-card"><span>Trasa</span><strong id="routeMetric">—</strong><small id="routeSmall">nie policzono</small></article>
+        </div>
+
+        <section class="section-card next-card" id="nextCard">
+          <div class="section-head">
+            <div><span class="eyebrow">NASTĘPNY PUNKT</span><h3 id="nextTitle">Brak zaplanowanego punktu</h3></div>
+            <span class="eta-badge" id="nextEta">—</span>
+          </div>
+          <p class="muted" id="nextAddress">Dodaj adresy w zakładce Trasa.</p>
+          <div class="job-tags" id="nextTags"></div>
+          <div class="button-row">
+            <button class="primary" id="goNextBtn" disabled>▶ Nawiguj</button>
+            <button class="secondary" id="arrivedNextBtn" disabled>Jestem na miejscu</button>
+          </div>
+        </section>
+
+        <section class="section-card">
+          <div class="section-head"><div><span class="eyebrow">SZYBKIE AKCJE</span><h3>Na trasie</h3></div></div>
+          <div class="quick-grid">
+            <button class="quick-action" data-action="scan"><span>⌁</span><b>Skanuj adres</b><small>aparat + OCR</small></button>
+            <button class="quick-action" data-action="add"><span>＋</span><b>Dodaj punkt</b><small>ręcznie</small></button>
+            <button class="quick-action" data-action="optimize"><span>↝</span><b>Optymalizuj</b><small>drogi + okna</small></button>
+            <button class="quick-action" data-action="load"><span>▣</span><b>Załadunek</b><small>kolejność auta</small></button>
+          </div>
+        </section>
+
+        <section class="section-card">
+          <div class="section-head"><div><span class="eyebrow">PRZED WYJAZDEM</span><h3>Checklist</h3></div><button class="text-btn" id="resetChecklistBtn">Reset</button></div>
+          <div id="checklist" class="checklist"></div>
+        </section>
+      </section>
+
+      <section class="view" data-view="route">
+        <div class="page-head">
+          <div><span class="eyebrow">PLAN DNIA</span><h2>Trasa</h2><p class="muted">Ustaw kolejność ręcznie lub użyj inteligentnej optymalizacji.</p></div>
+          <button class="primary compact" id="addStopBtn">＋ Punkt</button>
+        </div>
+
+        <div class="route-toolbar section-card">
+          <div class="route-summary">
+            <div><span>Punkty</span><b id="routeStopsCount">0</b></div>
+            <div><span>Dystans</span><b id="routeDistance">—</b></div>
+            <div><span>Praca</span><b id="routeServiceTime">0 min</b></div>
+          </div>
+          <div class="button-row stack-mobile">
+            <button class="primary" id="optimizeBtn">✦ Optymalizuj trasę</button>
+            <button class="secondary" id="scanAddressBtn">⌁ Skanuj adres</button>
+          </div>
+          <div class="progress-line hidden" id="routeProgress"><span></span><em>Liczenie trasy…</em></div>
+        </div>
+
+        <div id="stopsList" class="stops-list"></div>
+        <div id="emptyStops" class="empty-state">
+          <div class="empty-icon">⌖</div>
+          <h3>Nie masz jeszcze punktów</h3>
+          <p>Dodaj adres ręcznie albo zeskanuj etykietę / dokument aparatem.</p>
+          <button class="primary" id="emptyAddBtn">Dodaj pierwszy punkt</button>
+        </div>
+      </section>
+
+      <section class="view" data-view="load">
+        <div class="page-head">
+          <div><span class="eyebrow">MAGAZYN → AUTO</span><h2>Załadunek</h2><p class="muted">Układ odwrotny do trasy: ostatnia dostawa najgłębiej, pierwsza przy drzwiach.</p></div>
+        </div>
+        <div class="section-card load-tip"><b>Reguła 1 ruchu</b><p>Każdy produkt powinien być wyjmowany bez przekładania innego sprzętu. Aplikacja wylicza kolejność na podstawie planu dnia.</p></div>
+        <div id="loadList" class="load-list"></div>
+      </section>
+
+      <section class="view" data-view="stats">
+        <div class="page-head"><div><span class="eyebrow">PODSUMOWANIE</span><h2>Statystyki</h2><p class="muted">Dane są zapisywane lokalnie na Twoim telefonie.</p></div></div>
+        <div class="metrics-grid stats-grid">
+          <article class="metric-card"><span>KM dzisiaj</span><strong id="statsKm">0,0</strong><small>GPS</small></article>
+          <article class="metric-card"><span>Średnio / punkt</span><strong id="avgKm">—</strong><small>kilometry</small></article>
+          <article class="metric-card"><span>Zakończone</span><strong id="statsDone">0</strong><small>zleceń</small></article>
+          <article class="metric-card"><span>Czas na punkt</span><strong id="avgJobTime">—</strong><small>średnia</small></article>
+        </div>
+        <section class="section-card">
+          <div class="section-head"><div><span class="eyebrow">KILOMETRÓWKA</span><h3>Ręczny licznik awaryjny</h3></div></div>
+          <p class="muted">Na iOS aplikacja webowa może zostać uśpiona w tle. Dla pewności możesz wpisać stan licznika auta na początku i końcu zmiany.</p>
+          <div class="form-grid two">
+            <label><span>Stan początkowy</span><input type="number" inputmode="decimal" id="odoStart" placeholder="np. 125430" /></label>
+            <label><span>Stan końcowy</span><input type="number" inputmode="decimal" id="odoEnd" placeholder="np. 125612" /></label>
+          </div>
+          <div class="odometer-result"><span>Dystans z licznika</span><strong id="odoResult">—</strong></div>
+        </section>
+        <section class="section-card">
+          <div class="section-head"><div><span class="eyebrow">HISTORIA</span><h3>Ostatnie dni</h3></div><button class="text-btn" id="exportBtn">Eksport CSV</button></div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav glass" aria-label="Nawigacja główna">
+      <button class="nav-item active" data-target="today"><span>⌂</span><b>Dzisiaj</b></button>
+      <button class="nav-item" data-target="route"><span>↝</span><b>Trasa</b></button>
+      <button class="nav-item center" data-target="scan"><span>⌁</span><b>Skanuj</b></button>
+      <button class="nav-item" data-target="load"><span>▣</span><b>Załadunek</b></button>
+      <button class="nav-item" data-target="stats"><span>◔</span><b>Statystyki</b></button>
+    </nav>
+  </div>
+
+  <div class="modal-backdrop" id="stopModal" hidden>
+    <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="stopModalTitle">
+      <div class="modal-handle"></div>
+      <div class="modal-head"><div><span class="eyebrow">ZLECENIE</span><h2 id="stopModalTitle">Dodaj punkt</h2></div><button class="icon-btn" data-close="stopModal">×</button></div>
+      <form id="stopForm">
+        <input type="hidden" id="stopId" />
+        <label><span>Adres *</span><input id="addressInput" autocomplete="street-address" placeholder="np. Sienkiewicza 10, Kielce" required /></label>
+        <div class="form-grid two">
+          <label><span>Klient</span><input id="customerInput" autocomplete="name" placeholder="np. Pan Marek" /></label>
+          <label><span>Telefon</span><input id="phoneInput" type="tel" autocomplete="tel" placeholder="np. 500 000 000" /></label>
+        </div>
+        <div class="form-grid two">
+          <label><span>Okno od</span><input id="windowFromInput" type="time" /></label>
+          <label><span>Okno do</span><input id="windowToInput" type="time" /></label>
+        </div>
+        <div class="form-grid two">
+          <label><span>Szacowany czas</span><select id="durationInput"><option value="10">10 min</option><option value="20">20 min</option><option value="30" selected>30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option><option value="120">120 min</option></select></label>
+          <label><span>Piętro</span><input id="floorInput" inputmode="numeric" placeholder="np. 4" /></label>
+        </div>
+        <div class="field"><span>Rodzaj pracy</span><div class="chip-selector" id="serviceSelector">
+          <button type="button" data-value="Dostawa" class="selected">Dostawa</button>
+          <button type="button" data-value="Wniesienie">Wniesienie</button>
+          <button type="button" data-value="Montaż">Montaż</button>
+          <button type="button" data-value="Odbiór">Odbiór</button>
+        </div></div>
+        <div class="field"><span>Warunki</span><div class="chip-selector" id="conditionSelector">
+          <button type="button" data-value="Winda">Winda</button><button type="button" data-value="Brak windy">Brak windy</button><button type="button" data-value="Trudny parking">Trudny parking</button><button type="button" data-value="Ciężki sprzęt">Ciężki sprzęt</button>
+        </div></div>
+        <label><span>Sprzęt / załadunek</span><input id="itemsInput" placeholder="np. Lodówka Samsung, pralka LG" /></label>
+        <label><span>Notatka</span><textarea id="notesInput" rows="3" placeholder="Kod bramy, gdzie zaparkować, stare AGD do zabrania…"></textarea></label>
+        <button class="primary full" type="submit">Zapisz punkt</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="scanModal" hidden>
+    <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">
+      <div class="modal-handle"></div>
+      <div class="modal-head"><div><span class="eyebrow">APARAT + OCR</span><h2 id="scanModalTitle">Skanuj adres</h2></div><button class="icon-btn" data-close="scanModal">×</button></div>
+      <div class="scan-box" id="scanBox">
+        <div class="scan-visual">⌁<span></span></div>
+        <h3>Zrób zdjęcie etykiety lub dokumentu</h3>
+        <p>Najlepiej, gdy adres jest dobrze oświetlony i zajmuje większość zdjęcia.</p>
+        <label class="primary full file-label">Otwórz aparat<input id="cameraInput" type="file" accept="image/*" capture="environment" hidden /></label>
+      </div>
+      <div class="ocr-progress hidden" id="ocrProgress"><div class="spinner"></div><b>Rozpoznaję tekst…</b><p id="ocrStatus">Ładowanie silnika OCR.</p></div>
+      <div class="ocr-result hidden" id="ocrResult">
+        <label><span>Wykryty adres</span><textarea id="ocrAddress" rows="3"></textarea></label>
+        <details><summary>Pokaż cały rozpoznany tekst</summary><pre id="ocrRaw"></pre></details>
+        <button class="primary full" id="useOcrBtn">Dodaj jako punkt</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="detailModal" hidden>
+    <div class="modal-sheet" role="dialog" aria-modal="true">
+      <div class="modal-handle"></div>
+      <div class="modal-head"><div><span class="eyebrow">PUNKT TRASY</span><h2 id="detailTitle">Szczegóły</h2></div><button class="icon-btn" data-close="detailModal">×</button></div>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" hidden>
+    <div class="modal-sheet" role="dialog" aria-modal="true">
+      <div class="modal-handle"></div>
+      <div class="modal-head"><div><span class="eyebrow">DOSTAWCA+</span><h2>Ustawienia</h2></div><button class="icon-btn" data-close="settingsModal">×</button></div>
+      <div class="settings-list">
+        <label class="toggle-row"><div><b>Automatyczne śledzenie km</b><small>GPS działa podczas aktywnej zmiany</small></div><input type="checkbox" id="trackingToggle" checked /></label>
+        <label><span>Domyślna nawigacja</span><select id="navProvider"><option value="google">Google Maps</option><option value="apple">Apple Maps</option></select></label>
+        <label><span>Miasto / region do skanowania adresów</span><input id="defaultCity" placeholder="np. Kielce" /></label>
+        <button class="danger subtle full" id="clearDataBtn">Wyczyść wszystkie dane lokalne</button>
+        <p class="privacy-note">Prywatność: adresy, telefony klientów, historia i GPS są zapisywane wyłącznie lokalnie w tej przeglądarce. Geokodowanie i wyznaczanie trasy wymagają internetu i wysyłają same adresy/koordynaty do usług mapowych.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
